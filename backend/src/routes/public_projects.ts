@@ -23,14 +23,15 @@ router.post('/list', async (req, res) => {
 
     const skip = (page - 1) * limit;
 
+    const whereClause: any = req.body.includeArchived ? {} : { isActive: true, isArchived: false };
+
     const [totalItems, projects] = await prisma.$transaction([
-      prisma.project.count({ where: { isActive: true, isArchived: false } }),
+      prisma.project.count({ where: whereClause }),
       prisma.project.findMany({
-        where: { isActive: true, isArchived: false },
+        where: whereClause,
         skip,
         take: limit,
         include: { 
-          attachments: true,
           communityAmenities: true,
           propertyAmenities: true,
           nearbyPlaces: true
@@ -43,6 +44,7 @@ router.post('/list', async (req, res) => {
     const response_data = projects.map(p => ({
       projectId: p.id,
       projectName: p.projectName,
+      isArchived: p.isArchived,
       description: p.description,
       location: p.location,
       locationIframe: p.locationIframe,
@@ -57,11 +59,6 @@ router.post('/list', async (req, res) => {
         area: p.area
       },
       project_brochure: p.project_brochure,
-      attachments: p.attachments.map(att => ({
-        name: att.name,
-        imageUrl: att.imageUrl,
-        extension: att.extension
-      })),
       communityAmenities: p.communityAmenities.map(c => ({
         name: c.name,
         imageUrl: c.imageUrl

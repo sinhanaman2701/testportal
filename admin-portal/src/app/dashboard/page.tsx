@@ -11,7 +11,7 @@ export default function DashboardCatalog() {
     fetch('http://localhost:3001/projects/list', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'access-token': 'prototype-bypass' },
-      body: JSON.stringify({ page: "1", limit: "100" })
+      body: JSON.stringify({ page: "1", limit: "100", includeArchived: true })
     })
     .then(r => r.json())
     .then(data => setProperties(data.response_data || []))
@@ -45,14 +45,21 @@ export default function DashboardCatalog() {
           {properties.map((p: any) => (
             <div key={p.projectId} onClick={() => router.push(`/dashboard/${encodeURIComponent(p.projectName)}`)} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 group">
               <div className="h-64 w-full relative bg-[#F2EDE4] overflow-hidden">
-                {p.attachments && p.attachments.length > 0 ? (
-                  <img src={p.attachments[0].imageUrl} alt="banner" className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+                {p.thumbnailUrl ? (
+                  <img src={p.thumbnailUrl} alt="banner" className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
                 ) : (
                   <div className="flex items-center justify-center w-full h-full text-gray-400 font-bold">No Cover Image</div>
                 )}
                 
-                <div className="absolute top-4 right-4 bg-[#1A1A1A]/90 backdrop-blur-sm px-4 py-1.5 rounded-full text-xs font-bold text-[#D4AF37] shadow-sm uppercase tracking-wide">
-                  {p.overview?.bedrooms} BHK
+                <div className="absolute top-4 right-4 flex gap-2">
+                  {p.isArchived && (
+                    <div className="bg-red-600/90 backdrop-blur-sm px-4 py-1.5 rounded-full text-xs font-bold text-white shadow-sm uppercase tracking-wide">
+                      Archived
+                    </div>
+                  )}
+                  <div className="bg-[#1A1A1A]/90 backdrop-blur-sm px-4 py-1.5 rounded-full text-xs font-bold text-[#D4AF37] shadow-sm uppercase tracking-wide">
+                    {p.overview?.bedrooms} BHK
+                  </div>
                 </div>
               </div>
               
@@ -65,7 +72,6 @@ export default function DashboardCatalog() {
 
                 <div className="space-y-4 pt-4 border-t border-gray-100">
                   <div className="flex justify-between items-center text-sm font-bold text-[#1A1A1A]">
-                    <span className="text-[#6B7280] font-medium">Starting from</span>
                     <span className="text-lg text-[#D4AF37]">{p.overview?.price || "On Request"}</span>
                   </div>
                   
@@ -73,6 +79,14 @@ export default function DashboardCatalog() {
                     <span className="text-[#6B7280] font-medium">{p.overview?.area}</span>
                     <span className="text-[#D4AF37] group-hover:underline transition">View Details &rarr;</span>
                   </div>
+
+                  {p.isArchived && (
+                    <div className="mt-4 pt-3 border-t border-red-50 flex items-center justify-center">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-50 px-3 py-1 rounded-full">
+                        Archived Listing
+                      </span>
+                    </div>
+                  )}
                 </div>
 
               </div>

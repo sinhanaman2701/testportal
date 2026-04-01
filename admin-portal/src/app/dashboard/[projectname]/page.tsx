@@ -4,7 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { 
   ChevronLeft, Share2, Heart, BedDouble, Square, Bath, 
   Armchair, MapPin, Download, Eye, Phone, MessageCircle,
-  Hospital, GraduationCap, ShoppingCart, Plane, Train, Archive
+  Hospital, GraduationCap, ShoppingCart, Plane, Train, Archive, Pencil
 } from 'lucide-react';
 
 export default function ProjectDetail() {
@@ -42,11 +42,30 @@ export default function ProjectDetail() {
     }
   };
 
+  const handleUnarchive = async () => {
+    if (!confirm(`Restore ${project.projectName} to the live catalog?`)) return;
+    try {
+      const res = await fetch(`http://localhost:3001/admin/projects/${project.projectId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken') || 'prototype-bypass'}` },
+        body: JSON.stringify({ isArchived: false })
+      });
+      if (res.ok) {
+        router.push('/dashboard');
+      } else {
+        alert('Failed to restore project.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Internal Server Error while restoring.');
+    }
+  };
+
   useEffect(() => {
     fetch('http://localhost:3001/projects/list', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'access-token': 'prototype-bypass' },
-      body: JSON.stringify({ page: "1", limit: "100" })
+      body: JSON.stringify({ page: "1", limit: "100", includeArchived: true })
     })
     .then(r => r.json())
     .then(data => {
@@ -139,6 +158,7 @@ export default function ProjectDetail() {
               </div>
             </section>
 
+
             {/* SECTION 4: Description */}
             <section>
               <h2 className="text-2xl font-bold mb-6">Description</h2>
@@ -226,7 +246,7 @@ export default function ProjectDetail() {
               <h2 className="text-2xl font-bold mb-6 text-black">Project Brochure</h2>
               <div className="flex flex-col md:flex-row bg-[#F2EDE4] rounded-2xl overflow-hidden shadow-sm">
                 <div className="md:w-1/2 h-64 bg-gray-300">
-                  <img src={project.attachments?.[1]?.imageUrl || project.thumbnailUrl} className="w-full h-full object-cover grayscale" alt="brochure" />
+                  <img src={project.thumbnailUrl} className="w-full h-full object-cover grayscale" alt="brochure" />
                 </div>
                 <div className="md:w-1/2 p-8 flex flex-col justify-center items-center space-y-4">
                   <button className="w-full bg-[#1A1A1A] text-white py-4 rounded-full font-bold flex items-center justify-center space-x-2">
@@ -253,7 +273,6 @@ export default function ProjectDetail() {
               </div>
 
               <div className="pb-8 border-b border-gray-100">
-                <span className="text-gray-400 text-sm font-medium">Starting from</span>
                 <div className="text-3xl font-bold text-[#D4AF37]">{project.overview?.price || "₹ On Request"}</div>
               </div>
 
@@ -279,10 +298,19 @@ export default function ProjectDetail() {
                 <button className="w-full bg-white border-2 border-[#D4AF37] text-[#D4AF37] hover:bg-[#FDFCF9] py-5 rounded-xl font-bold text-lg transition flex items-center justify-center space-x-2">
                   <Phone size={20} /> <span>Refer</span>
                 </button>
-                <div className="pt-4 mt-2 border-t border-gray-100">
-                  <button onClick={handleArchive} className="w-full bg-red-50 text-red-600 hover:bg-red-100 py-3 rounded-xl font-bold text-sm transition flex items-center justify-center space-x-2">
-                    <Archive size={16} /> <span>Archive Project</span>
+                <div className="pt-4 mt-2 border-t border-gray-100 flex flex-col space-y-3">
+                  <button onClick={() => router.push(`/projects/edit/${project.projectId}`)} className="w-full bg-[#1A1A1A] text-white hover:bg-black py-3 rounded-xl font-bold text-sm transition flex items-center justify-center space-x-2">
+                    <Pencil size={16} /> <span>Edit Listing</span>
                   </button>
+                  {project.isArchived ? (
+                    <button onClick={handleUnarchive} className="w-full bg-green-50 text-green-700 hover:bg-green-100 py-3 rounded-xl font-bold text-sm transition flex items-center justify-center space-x-2">
+                      <span>Restore Project</span>
+                    </button>
+                  ) : (
+                    <button onClick={handleArchive} className="w-full bg-red-50 text-red-600 hover:bg-red-100 py-3 rounded-xl font-bold text-sm transition flex items-center justify-center space-x-2">
+                      <Archive size={16} /> <span>Archive Project</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
