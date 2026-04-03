@@ -370,40 +370,61 @@ export default function NewProjectPage() {
 
       <Header />
 
-      {/* ── Sub-header: Title + Stepper ── */}
-      <div className="bg-white border-b border-[#E7E5E4]">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <h1 className="text-base font-bold text-[#1C1917]">Publish Listing</h1>
-          <button onClick={() => router.push('/dashboard')} className="flex items-center gap-1.5 text-sm font-medium text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EF] px-3 py-2 rounded-lg transition-all">
-            <ChevronLeft size={15} /> Cancel
-          </button>
+      {/* ── Stepper Bar ── */}
+      <div className="bg-gradient-to-r from-[#1C1917] via-[#2D2420] to-[#1C1917] border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-6 py-5">
+          <p className="text-xs font-semibold text-white/40 tracking-widest uppercase mb-4">New Listing</p>
+
+          {/* Step indicators */}
+          <div className="flex items-center">
+            {stepLabels.map(({ n, label }, idx) => {
+              const isDone = n < step;
+              const isActive = n === step;
+              return (
+                <React.Fragment key={n}>
+                  <button
+                    onClick={() => isDone && setStep(n)}
+                    className={`flex items-center gap-2.5 group ${isDone ? 'cursor-pointer' : 'cursor-default'}`}
+                  >
+                    {/* Circle */}
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-all duration-300 ${
+                      isDone ? 'bg-[#16A34A] text-white shadow-lg shadow-green-900/40' :
+                      isActive ? 'bg-[#C9A84C] text-[#1C1917] shadow-lg shadow-amber-900/40 ring-2 ring-[#C9A84C]/30' :
+                      'bg-white/10 text-white/30'
+                    }`}>
+                      {isDone ? <CheckCircle size={14} strokeWidth={2.5} /> : n}
+                    </div>
+                    {/* Label */}
+                    <span className={`text-sm font-semibold transition-colors ${
+                      isActive ? 'text-[#C9A84C]' :
+                      isDone ? 'text-white/70 group-hover:text-white' :
+                      'text-white/30'
+                    }`}>
+                      {label}
+                    </span>
+                  </button>
+
+                  {/* Connector line */}
+                  {idx < stepLabels.length - 1 && (
+                    <div className="flex-1 mx-4 h-[1px] bg-white/10 relative overflow-hidden">
+                      <div
+                        className="absolute inset-y-0 left-0 bg-[#16A34A] transition-all duration-700 ease-out"
+                        style={{ width: n < step ? '100%' : '0%' }}
+                      />
+                    </div>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
         </div>
 
-        {/* ── Stepper (pill style) ── */}
-        <div className="max-w-7xl mx-auto px-6 pb-5">
-          <div className="flex items-center gap-2">
-            {stepLabels.map(({ n, label }, idx) => (
-              <React.Fragment key={n}>
-                <button
-                  onClick={() => n < step && setStep(n)}
-                  disabled={n > step}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-all ${
-                    n < step ? 'bg-[#16A34A] text-white border-[#16A34A] cursor-pointer' :
-                    n === step ? 'bg-[#1C1917] text-white border-[#1C1917] cursor-default' :
-                    'bg-white text-[#A8A29E] border-[#E7E5E4] cursor-not-allowed'
-                  }`}
-                >
-                  {n < step ? <CheckCircle size={13} strokeWidth={2.5} /> : null}
-                  <span>{label}</span>
-                </button>
-                {idx < stepLabels.length - 1 && (
-                  <div className="flex-1 h-[2px] rounded-full bg-[#E7E5E4] overflow-hidden">
-                    <div className="h-full bg-[#16A34A] transition-all duration-500 ease-out" style={{ width: `${n < step ? 100 : 0}%` }} />
-                  </div>
-                )}
-              </React.Fragment>
-            ))}
-          </div>
+        {/* Animated progress line at very bottom */}
+        <div className="h-[2px] bg-white/5">
+          <div
+            className="h-full bg-gradient-to-r from-[#C9A84C] to-[#16A34A] transition-all duration-700 ease-out"
+            style={{ width: `${((step - 1) / 2) * 100}%` }}
+          />
         </div>
       </div>
 
@@ -667,7 +688,7 @@ export default function NewProjectPage() {
               {/* Distance inputs for selected places only — sortable */}
               {selectedNearbyPlaces.length > 0 && (
                 <div className="mt-3 pt-3 border-t border-[#E7E5E4]">
-                  <p className="text-xs font-semibold text-[#78716C] mb-2">Set distances — drag to reorder priority</p>
+                  <p className="text-xs font-semibold text-[#78716C] mb-2">Arrange in the order you'd like them shown in the app</p>
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleNearbyDragEnd}>
                     <SortableContext
                       items={nearbyPlaces.filter(p => selectedNearbyPlaces.includes(p.id)).map(p => p.id)}
@@ -726,7 +747,16 @@ export default function NewProjectPage() {
 
         {/* ── Navigation Buttons ── */}
         <div className="mt-8 flex gap-3">
-          {step > 1 && (
+          {/* Left button: Cancel on step 1, Go back on steps 2+ */}
+          {step === 1 ? (
+            <button
+              type="button"
+              onClick={() => router.push('/dashboard')}
+              className="px-5 h-11 flex items-center justify-center gap-2 rounded-lg border border-[#E7E5E4] bg-white hover:bg-[#F5F3EF] text-[#78716C] text-sm font-medium transition-all"
+            >
+              <X size={14} /> Cancel
+            </button>
+          ) : (
             <button
               type="button"
               onClick={() => { setStep(prev => (prev - 1) as Step); window.scrollTo(0, 0); }}
@@ -736,6 +766,7 @@ export default function NewProjectPage() {
             </button>
           )}
 
+          {/* Right button(s) */}
           {step < 3 ? (
             <button
               type="button"
@@ -745,12 +776,12 @@ export default function NewProjectPage() {
               Continue <ArrowRight size={15} strokeWidth={2} />
             </button>
           ) : (
-            <div className="flex-1 flex gap-3">
+            <>
               <button
                 type="button"
                 onClick={() => handleSubmit(true)}
                 disabled={loading}
-                className="flex-1 h-11 flex items-center justify-center gap-2 rounded-lg bg-[#E7E5E4] hover:bg-[#D6D3D1] disabled:opacity-60 text-[#1C1917] text-sm font-semibold transition-all shadow-sm hover:shadow-md"
+                className="flex-1 h-11 flex items-center justify-center gap-2 rounded-lg bg-[#E7E5E4] hover:bg-[#D6D3D1] disabled:opacity-60 text-[#1C1917] text-sm font-semibold transition-all"
               >
                 {loading ? 'Saving...' : 'Save as Draft'}
               </button>
@@ -762,7 +793,7 @@ export default function NewProjectPage() {
               >
                 {loading ? 'Publishing...' : <><CheckCircle size={15} strokeWidth={2} /> Publish Listing</>}
               </button>
-            </div>
+            </>
           )}
         </div>
 
